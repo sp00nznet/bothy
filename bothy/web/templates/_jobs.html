@@ -1,0 +1,20 @@
+{% for j in jobs %}
+<div class="job {{ j.status }}">
+  <div class="job-top">
+    <span class="dot {{ 'ok' if j.status=='complete' else 'accent' if j.status=='installing' else 'danger' if j.status in ('blocked','failed') else 'muted' }}"></span>
+    <span class="job-name">{{ j.name }}</span>
+    <span class="job-target">{{ j.target }}</span>
+    <span class="job-status t-{{ 'ok' if j.status=='complete' else 'accent' if j.status=='installing' else 'danger' if j.status in ('blocked','failed') else 'muted' }}">{{ j.status|capitalize }}</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="job-bar" style="flex:1">
+      <i style="width:{{ j.pct }}%;background:{{ 'var(--ok)' if j.status=='complete' else 'var(--accent)' }}"></i>
+    </div>
+    <span class="pct">{{ j.pct }}%</span>
+  </div>
+  <div class="job-meta">
+    <span>{{ j.reason or j.step }}</span>
+    <span class="el">{{ j.elapsed }}</span>
+  </div>
+</div>
+{% endfor %}

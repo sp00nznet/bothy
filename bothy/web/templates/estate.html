@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Estate — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="page-head">
+    <h1 class="page-title">Estate</h1>
+    <div class="page-sub">{{ counts.total }} services · {{ counts.degraded }} degraded · {{ counts.unreachable }} unreachable</div>
+    <div class="spacer" style="flex:1"></div>
+    <span class="page-sub">audited {{ audited }}</span>
+    <form method="post" action="{{ url_for('main.action_audit') }}" data-busy="Auditing…">
+      <button class="btn ghost">Run reachability audit</button>
+    </form>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr>
+        <th style="width:56px">VMID</th><th>Hostname</th><th>Address</th><th>Node</th>
+        <th style="width:74px">CPU</th><th style="width:84px">Memory</th>
+        <th style="width:80px">Uptime</th><th style="width:92px">Route</th>
+      </tr></thead>
+      <tbody>
+      {% for s in services %}
+        <tr>
+          <td class="mono t-muted">{{ s.vmid }}</td>
+          <td><span class="dot {{ 'ok' if s.status=='running' else 'warn' if s.status=='degraded' else 'accent' if s.status=='deploying' else 'muted' }}"></span>
+              <a href="{{ url_for('main.service_detail', vmid=s.vmid) }}" style="margin-left:7px">{{ s.hostname }}</a></td>
+          <td class="mono t-muted">{{ s.address }}</td>
+          <td class="t-muted">{{ s.node }}</td>
+          <td class="mono">{{ s.cpu_pct }}%</td>
+          <td class="mono">{{ s.mem_label }}</td>
+          <td class="mono t-muted">{{ s.uptime }}</td>
+          <td class="t-{{ s.route_kind if s.route_kind != 'muted' else 'muted' }}">{{ s.route }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

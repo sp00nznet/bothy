@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Catalog — Bothy{% endblock %}
+{% block main %}
+<div class="catalog">
+  <form class="facets" method="get" id="facetform">
+    <div style="display:flex; align-items:center; margin-bottom:12px">
+      <div class="label-up">Filters</div>
+      <a href="{{ url_for('main.catalog') }}" style="margin-left:auto; font-size:11px; color:var(--accent-text)">Clear</a>
+    </div>
+
+    {% if active_chips %}
+    <div class="chips">
+      {% for c in active_chips %}
+        <a class="chip" href="{{ url_for('main.catalog', **without(c.param, c.value)) }}"
+           title="Remove this filter">{{ c.label }} ✕</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <input type="hidden" name="q" value="{{ q or '' }}">
+
+    <div class="facet-group">
+      <span class="label-up">Deployment type</span>
+      {% for f in facets.deploy_type %}
+      <label class="facet">
+        <input type="checkbox" name="deploy_type" value="{{ f.id }}" {{ 'checked' if f.id in sel.deploy_type }} onchange="this.form.submit()">
+        <span class="box"></span>{{ f.label }}<span class="n">{{ f.count }}</span>
+      </label>
+      {% endfor %}
+    </div>
+
+    <div class="facet-group">
+      <span class="label-up">Footprint</span>
+      {% for f in facets.footprint %}
+      <label class="facet">
+        <input type="checkbox" name="footprint" value="{{ f.id }}" {{ 'checked' if f.id in sel.footprint }} onchange="this.form.submit()">
+        <span class="box"></span>{{ f.label }}<span class="n">{{ f.count }}</span>
+      </label>
+      {% endfor %}
+    </div>
+
+    <div class="facet-group">
+      <span class="label-up">Audit state</span>
+      {% for f in facets.audit_state %}
+      <label class="facet">
+        <input type="checkbox" name="audit_state" value="{{ f.id }}" {{ 'checked' if f.id in sel.audit_state }} onchange="this.form.submit()">
+        <span class="box"></span>{{ f.label }}<span class="n">{{ f.count }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </form>
+
+  <div class="results">
+    <div class="results-bar">
+      <form method="get" class="search" style="max-width:340px">
+        <span class="icon">⌕</span>
+        <input name="q" value="{{ q or '' }}" placeholder="Search 683 definitions" autofocus>
+      </form>
+      <div class="match">{{ matched }} of {{ total }} match{% if shown < matched %} · showing {{ shown }}{% endif %}</div>
+      <div class="spacer" style="flex:1"></div>
+      <form method="get" style="display:flex;gap:6px;align-items:center">
+        <input type="hidden" name="q" value="{{ q or '' }}">
+        {% for g, vals in sel.items() %}{% for v in vals %}<input type="hidden" name="{{ g }}" value="{{ v }}">{% endfor %}{% endfor %}
+        <select name="sort" class="select" onchange="this.form.submit()">
+          <option value="name" {{ 'selected' if sort=='name' }}>Sort: Name</option>
+          <option value="memory" {{ 'selected' if sort=='memory' }}>Sort: Memory</option>
+          <option value="audit" {{ 'selected' if sort=='audit' }}>Sort: Audit state</option>
+        </select>
+      </form>
+    </div>
+
+    <div style="padding:12px 20px 0; display:flex; gap:8px; align-items:center">
+      {% for c in collections %}<a class="chip pill" href="{{ url_for('main.collections') }}">{{ c.name }} <span class="mono" style="color:var(--fg-4)">{{ c.count }}</span></a>{% endfor %}
+      {% if not collections %}<span class="page-sub">No collections yet — select apps below and save one.</span>{% endif %}
+    </div>
+
+    <div class="grid">
+      {% for d in results %}
+      <a class="app" data-key="{{ d.key }}" data-name="{{ d.name }}" data-cores="{{ d.cores }}"
+         data-memory="{{ d.memory_mb }}" data-disk="{{ d.disk_gb }}"
+         href="{{ url_for('main.app_detail', key=d.key) }}">
+        <div class="checkbox-sel"></div>
+        <div class="app-top">
+          <div class="tile">{{ d.initials }}</div>
+          <div style="min-width:0">
+            <div class="app-name">{{ d.name }}</div>
+            <div class="app-cat">{{ d.category or '—' }}</div>
+          </div>
+        </div>
+        <div class="app-desc">{{ d.description }}</div>
+        <div class="app-foot">
+          <span class="type-chip">{{ d.type_label }}</span>
+          <span>{{ d.resource_summary }}</span>
+          <span class="app-audit t-{{ 'ok' if d.audit_state == 'verified' else 'warn' if d.audit_state == 'unreviewed' else 'danger' }}">{{ d.audit_label }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    <div class="selbar" id="selbar" hidden>
+      <span class="n" id="sel-count">0 selected</span>
+      <span class="summary" id="sel-summary"></span>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn ghost" id="sel-clear" type="button">Clear</button>
+      <form id="collection-form" method="post" action="{{ url_for('main.action_collection') }}"
+            style="display:flex;gap:8px;align-items:center">
+        <input type="hidden" name="name" value="">
+        <span id="sel-keys"></span>
+        <button class="btn ghost" type="submit">Save as collection</button>
+      </form>
+      <form method="post" action="{{ url_for('main.batch') }}">
+        <span id="sel-keys-2"></span>
+        <button class="btn accent" type="submit">Configure batch →</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

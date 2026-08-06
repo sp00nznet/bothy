@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ s.hostname }} — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="page-sub" style="margin-bottom:10px">
+    <a href="{{ url_for('main.estate_view') }}">Estate</a> / {{ s.node }} / {{ s.hostname }} · {{ s.vmid }}
+  </div>
+  <div class="svc-head">
+    <span class="dot {{ 'ok' if s.status=='running' else 'warn' }}" style="width:9px;height:9px"></span>
+    <h1 class="page-title">{{ s.hostname }}</h1>
+    <span class="mono t-muted">{{ s.address }} · LXC {{ s.vmid }}</span>
+    <span class="status-chip">Running · {{ s.uptime }}</span>
+    <div class="spacer" style="flex:1"></div>
+    <button class="btn ghost">Open ↗</button>
+    <button class="btn ghost">Console</button>
+    <button class="btn ghost">Restart</button>
+    <button class="btn danger">Destroy</button>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="metrics">
+        {% for m in [('CPU', s.cpu_pct ~ '%'), ('Memory', s.mem_label), ('Network out', '1.8 Mb/s')] %}
+        <div class="card" style="padding:13px 14px">
+          <div style="display:flex; align-items:center">
+            <span class="label-up">{{ m[0] }}</span>
+            <span class="metric-val">{{ m[1] }}</span>
+          </div>
+          <div class="spark">
+            {% for h in spark %}<i style="height:{{ h }}%"></i>{% endfor %}
+          </div>
+          <div style="font-size:11px;color:var(--fg-4);margin-top:6px">last 60 min</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Reachability</div>
+          <div class="page-sub">audited {{ audited }}</div>
+          <div class="spacer" style="flex:1"></div>
+          <form method="post" action="{{ url_for('main.action_audit') }}" data-busy="Checking…">
+            <input type="hidden" name="vmid" value="{{ s.vmid }}">
+            <button class="btn ghost">Re-run</button>
+          </form>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>URL</th><th style="width:130px">via</th><th style="width:78px">Code</th><th>Note</th></tr></thead>
+          <tbody>
+            {% for r in results %}
+            <tr>
+              <td class="mono">{{ r.url }}</td>
+              <td class="t-muted">{{ r.via }}</td>
+              <td class="mono t-{{ 'ok' if r.ok else 'danger' }}">{{ r.code }}</td>
+              <td class="t-muted">{{ r.note }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="t-muted">Not audited yet — press Re-run to probe this service.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Deployment</div></div>
+        <div class="card-body" style="padding-top:4px">
+          <div class="kv"><span class="k">Deployed</span><span class="v">2026-07-21</span></div>
+          <div class="kv"><span class="k">Batch</span><span class="v">#41</span></div>
+          <div class="kv"><span class="k">Definition</span><span class="v">{{ s.definition_key }} @ 3f9c1ad</span></div>
+          <div class="kv"><span class="k">Drift</span><span class="v t-warn">env: 1 change</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Resources</div></div>
+        <div class="card-body" style="padding-top:4px">
+          <div class="kv"><span class="k">Node</span><span class="v">{{ s.node }}</span></div>
+          <div class="kv"><span class="k">CPU</span><span class="v">{{ s.cpu_pct }}%</span></div>
+          <div class="kv"><span class="k">Memory</span><span class="v">{{ s.mem_label }}</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Secrets</div></div>
+        <div class="card-body" style="padding-top:4px">
+          <div class="kv"><span class="k">Rotated</span><span class="v t-muted">never</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

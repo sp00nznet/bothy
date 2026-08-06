@@ -1,0 +1,82 @@
+<Window x:Class="Bothy.Desktop.MonitorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="Deployment monitor — Batch #48" Width="600" Height="520"
+        WindowStyle="None" ResizeMode="CanResize"
+        Background="{StaticResource WinBg}"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True" SnapsToDevicePixels="True">
+  <WindowChrome.WindowChrome>
+    <shell:WindowChrome CaptionHeight="32" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0"/>
+  </WindowChrome.WindowChrome>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="32"/>   <!-- own caption: it is a real top-level window -->
+      <RowDefinition Height="30"/>   <!-- tab strip -->
+      <RowDefinition Height="56"/>   <!-- progress header -->
+      <RowDefinition Height="*"/>    <!-- log -->
+      <RowDefinition Height="34"/>   <!-- footer -->
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0" Background="{StaticResource WinChrome}">
+      <DockPanel LastChildFill="False">
+        <TextBlock DockPanel.Dock="Left" Text="Deployment monitor — Batch #48" VerticalAlignment="Center"
+                   Margin="12,0,0,0" FontSize="12" Foreground="{StaticResource Fg2}"/>
+        <Button DockPanel.Dock="Right" Width="44" Height="32" Style="{StaticResource CmdButton}"
+                shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="Close_Click">
+          <TextBlock Text="&#xE8BB;" FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets" FontSize="10"
+                     Foreground="{StaticResource Fg2}"/></Button>
+        <Button DockPanel.Dock="Right" Width="44" Height="32" Style="{StaticResource CmdButton}"
+                shell:WindowChrome.IsHitTestVisibleInChrome="True">
+          <TextBlock Text="&#xE922;" FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets" FontSize="10"
+                     Foreground="{StaticResource Fg2}"/></Button>
+        <Button DockPanel.Dock="Right" Width="44" Height="32" Style="{StaticResource CmdButton}"
+                shell:WindowChrome.IsHitTestVisibleInChrome="True">
+          <TextBlock Text="&#xE921;" FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets" FontSize="10"
+                     Foreground="{StaticResource Fg2}"/></Button>
+      </DockPanel>
+    </Border>
+
+    <Border Grid.Row="1" Background="{StaticResource WinChrome}">
+      <StackPanel x:Name="Tabs" Orientation="Horizontal"/>
+    </Border>
+
+    <Border Grid.Row="2" Background="{StaticResource WinBg}"
+            BorderBrush="{StaticResource Stroke}" BorderThickness="0,0,0,1">
+      <Grid Margin="14,0">
+        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" LastChildFill="False" VerticalAlignment="Center">
+          <TextBlock x:Name="JobTitle" DockPanel.Dock="Left" Text="gitea → pve01 · vmid 129"
+                     FontWeight="SemiBold" VerticalAlignment="Center"/>
+          <TextBlock x:Name="JobPct" DockPanel.Dock="Right" Text="64% · 1m 12s"
+                     Style="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"/>
+        </DockPanel>
+        <Border Grid.Row="1" Height="5" CornerRadius="3" Background="#12FFFFFF" Margin="0,0,0,12">
+          <Border x:Name="ProgFill" HorizontalAlignment="Left" Width="330" CornerRadius="3"
+                  Background="{StaticResource Accent}"/>
+        </Border>
+      </Grid>
+    </Border>
+
+    <ScrollViewer Grid.Row="3" x:Name="LogScroll" Background="#151518"
+                  VerticalScrollBarVisibility="Auto" Padding="14,10">
+      <StackPanel x:Name="LogBody"/>
+    </ScrollViewer>
+
+    <Border Grid.Row="4" Background="{StaticResource WinPanel}"
+            BorderBrush="{StaticResource Stroke}" BorderThickness="0,1,0,0">
+      <DockPanel LastChildFill="False" Margin="12,0">
+        <CheckBox DockPanel.Dock="Left" IsChecked="True" VerticalAlignment="Center"
+                  Foreground="{StaticResource Fg2}"><TextBlock Text="Auto-scroll" FontSize="11.5"/></CheckBox>
+        <CheckBox DockPanel.Dock="Left" IsChecked="True" VerticalAlignment="Center" Margin="14,0,0,0"
+                  Foreground="{StaticResource Fg2}"><TextBlock Text="Notify on finish" FontSize="11.5"/></CheckBox>
+        <Button DockPanel.Dock="Right" Style="{StaticResource CmdButton}" Height="26" Margin="8,0,0,0">
+          <TextBlock Text="Abort" Foreground="{StaticResource Danger}" FontSize="11.5"/></Button>
+        <Button DockPanel.Dock="Right" Style="{StaticResource CmdButton}" Height="26">
+          <TextBlock Text="Save log…" FontSize="11.5"/></Button>
+      </DockPanel>
+    </Border>
+  </Grid>
+</Window>

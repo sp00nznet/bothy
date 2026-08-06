@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{% block title %}Bothy{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='bothy.css') }}">
+<script defer src="{{ url_for('static', filename='bothy.js') }}"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="rail">
+    <div class="brand">
+      <div class="mark"><i></i><i></i><i></i><i></i></div>
+      <div class="brand-name">Bothy</div>
+    </div>
+
+    <div class="rail-group">
+      <div class="rail-label">Operate</div>
+      <a class="nav {{ 'active' if active == 'overview' }}" href="{{ url_for('main.overview') }}">
+        <span class="glyph">▦</span> Overview</a>
+      <a class="nav {{ 'active' if active == 'estate' }}" href="{{ url_for('main.estate_view') }}">
+        <span class="glyph">▤</span> Estate <span class="count">{{ nav.estate }}</span></a>
+      <a class="nav {{ 'active' if active == 'queue' }}" href="{{ url_for('main.queue') }}">
+        <span class="glyph">◷</span> Queue <span class="count">{{ nav.queue }}</span></a>
+      <a class="nav {{ 'active' if active == 'history' }}" href="{{ url_for('main.history') }}">
+        <span class="glyph">↻</span> History</a>
+    </div>
+
+    <div class="rail-group">
+      <div class="rail-label">Build</div>
+      <a class="nav {{ 'active' if active == 'catalog' }}" href="{{ url_for('main.catalog') }}">
+        <span class="glyph">▣</span> Catalog <span class="count">{{ nav.catalog }}</span></a>
+      <a class="nav {{ 'active' if active == 'collections' }}" href="{{ url_for('main.collections') }}">
+        <span class="glyph">◈</span> Collections <span class="count">{{ nav.collections }}</span></a>
+    </div>
+
+    <div class="rail-group">
+      <div class="rail-label">Configure</div>
+      <a class="nav {{ 'active' if active == 'providers' }}" href="{{ url_for('main.providers') }}">
+        <span class="glyph">⬡</span> Providers <span class="count">{{ nav.providers }}</span></a>
+      <a class="nav {{ 'active' if active == 'credentials' }}" href="{{ url_for('main.credentials') }}">
+        <span class="glyph">⚿</span> Credentials</a>
+      <a class="nav {{ 'active' if active == 'settings' }}" href="{{ url_for('main.settings') }}">
+        <span class="glyph">⚙</span> Settings</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search">
+        <span class="icon">⌕</span>
+        <input placeholder="Search applications, services, hosts" value="{{ q or '' }}">
+        <span class="kbd">Ctrl K</span>
+      </div>
+      <span class="page-sub mono">{{ nav.estate }} guests · {{ nav.providers }} providers</span>
+      <div class="spacer"></div>
+      <form method="post" action="{{ url_for('main.action_refresh') }}" data-busy="Refreshing…">
+        <button class="btn ghost" title="Re-read every configured provider">Refresh</button>
+      </form>
+      <a class="btn accent" href="{{ url_for('main.catalog') }}">Deploy</a>
+    </div>
+    {% if estate_errors %}
+    <div class="banner danger">
+      {% for e in estate_errors %}<div>Provider error — {{ e }}</div>{% endfor %}
+    </div>
+    {% endif %}
+    {% block main %}{% endblock %}
+  </div>
+</div>
+</body>
+</html>

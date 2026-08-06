@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}History — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="page-head">
+    <h1 class="page-title">History</h1>
+    <div class="page-sub">{{ days.values()|map('length')|sum }} events</div>
+  </div>
+
+  {% for day, events in days.items() %}
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-head">
+      <div class="card-title">{{ day }}</div>
+      <div class="page-sub">{{ events|length }}</div>
+    </div>
+    <div class="card-body" style="padding-top:4px">
+      {% for e in events %}
+      <div class="activity">
+        <span class="dot {{ e.dot }}" style="margin-top:5px"></span>
+        <div>
+          <div>{{ e.subject }}</div>
+          <div class="det">{{ e.label }}{% if e.detail %} · {{ e.detail }}{% endif %}</div>
+        </div>
+        <div class="when" title="{{ e.ago }}">{{ e.when }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="card"><div class="card-body" style="color:var(--fg-3)">
+    Nothing recorded yet. Deploys, reachability audits, catalog link audits,
+    provider changes and refreshes all append here.
+  </div></div>
+  {% endfor %}
+</div>
+{% endblock %}

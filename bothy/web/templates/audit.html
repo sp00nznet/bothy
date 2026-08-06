@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Audit queue — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="page-head">
+    <h1 class="page-title">Audit queue</h1>
+    <div class="page-sub">{{ total }} definitions{% if which %} · {{ which }}{% endif %}</div>
+    <div class="spacer" style="flex:1"></div>
+    <form method="post" action="{{ url_for('main.action_catalog_audit') }}" data-busy="Checking links…">
+      <button class="btn">Re-check all links</button>
+    </form>
+  </div>
+
+  <div class="card" style="margin-bottom:12px"><div class="card-body">
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div><div class="label-up">Checked</div>
+        <div style="font-size:20px;font-weight:600">{{ coverage.checked }}<span
+          class="page-sub" style="font-size:12px"> / {{ coverage.total }}</span></div></div>
+      <div><div class="label-up">Verified</div>
+        <div style="font-size:20px;font-weight:600" class="t-ok">{{ summary.counts.verified }}</div></div>
+      <div><div class="label-up">Unreviewed</div>
+        <div style="font-size:20px;font-weight:600" class="t-warn">{{ summary.counts.unreviewed }}</div></div>
+      <div><div class="label-up">Broken link</div>
+        <div style="font-size:20px;font-weight:600" class="t-danger">{{ summary.counts.broken }}</div></div>
+      <div style="flex:1;min-width:260px">
+        <div class="label-up">Link coverage</div>
+        <div style="color:var(--fg-3);line-height:1.55;margin-top:6px">
+          Only {{ linkable }} definitions reference a URL anywhere. The rest cannot be
+          verified because no upstream link is recorded — that is the finding, not a
+          checker failure.
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="card">
+    <table class="tbl">
+      <thead><tr>
+        <th style="width:34px"></th><th style="width:190px">Definition</th>
+        <th style="width:110px">State</th><th>Finding</th><th style="width:90px">Checked</th>
+      </tr></thead>
+      <tbody>
+      {% for d in defs %}
+        <tr>
+          <td><div class="tile" style="width:22px;height:22px;font-size:9px">{{ d.initials }}</div></td>
+          <td><a href="{{ url_for('main.app_detail', key=d.key) }}">{{ d.name }}</a>
+              <span class="mono" style="color:var(--fg-4)">{{ d.key }}</span></td>
+          <td class="t-{{ 'ok' if d.audit_state=='verified' else 'warn' if d.audit_state=='unreviewed' else 'danger' }}">{{ d.audit_label }}</td>
+          <td class="t-muted">{{ d.audit_reason or '—' }}
+            {% if d.upstream %}<span class="mono" style="color:var(--fg-4)"> {{ d.upstream[:58] }}</span>{% endif %}</td>
+          <td class="mono t-muted">{{ d.audit_verified_at or '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

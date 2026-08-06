@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Providers — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="page-head">
+    <h1 class="page-title">Providers</h1>
+    <div class="page-sub">{{ configured }} of 8 configured</div>
+    <div class="spacer" style="flex:1"></div>
+    <form method="post" action="{{ url_for('main.action_provider_test') }}" data-busy="Testing…">
+      <button class="btn">Test connections</button>
+    </form>
+    <a class="btn accent" href="{{ url_for('main.provider_wizard') }}">Add provider</a>
+  </div>
+  <div class="prov-grid">
+    {% for key, name, kind, status, detail, meta in providers %}
+    <div class="card prov">
+      <div class="prov-top">
+        <span class="dot {{ kind }}"></span>
+        <span class="prov-name">{{ name }}</span>
+        <span class="prov-status t-{{ kind if kind != 'muted' else 'muted' }}">{{ status }}</span>
+      </div>
+      <div class="prov-detail">{{ detail }}</div>
+      <div class="prov-meta">{{ meta }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

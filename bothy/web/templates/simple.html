@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="page-head"><h1 class="page-title">{{ title }}</h1></div>
+  <div class="card"><div class="card-body" style="color:var(--fg-3)">{{ note }}</div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Add provider — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="scrim">
+    <div class="wizard">
+      <div class="wz-head">
+        <div style="font-weight:600;font-size:14px">Add provider</div>
+        <div class="page-sub">{{ 2 if kind else 1 }} of 3 · {{ 'Credentials' if kind else 'Provider type' }}</div>
+        <div class="spacer" style="flex:1"></div>
+        <a class="btn ghost" href="{{ url_for('main.providers') }}">Cancel</a>
+      </div>
+
+      <div class="wz-body">
+        <div class="wz-rail">
+          <div class="wz-step {{ 'done' if kind }}">
+            {% if kind %}<span class="t-ok">&#10003;</span>{% endif %} Provider type</div>
+          <div class="wz-step {{ 'active' if kind }}">Credentials</div>
+          <div class="wz-step">Defaults</div>
+          <div class="wz-note">
+            Fields shown are the ones this provider actually needs — Proxmox asks
+            for a node and token, AWS for a region and IAM key.
+          </div>
+        </div>
+
+        <div class="wz-main">
+        {% if not kind %}
+          <div class="label-up" style="margin-bottom:10px">Choose a provider type</div>
+          <div class="wz-types">
+            {% for key, label, needs in types %}
+            <a class="wz-type {{ '' if key in implemented else 'unavailable' }}"
+               href="{{ url_for('main.provider_wizard', type=key) }}">
+              <div class="wz-tile {{ key }}">{{ label[:2] }}</div>
+              <div style="min-width:0">
+                <div style="font-weight:600">{{ label }}</div>
+                <div class="page-sub">{{ needs if key not in implemented else 'Ready' }}</div>
+              </div>
+              {% if key not in implemented %}
+              <span class="chip" style="margin-left:auto">no adapter yet</span>{% endif %}
+            </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <form method="post" action="{{ url_for('main.action_provider_save') }}" id="wz-form">
+            <input type="hidden" name="type" value="{{ kind }}">
+            <div class="wz-selected">
+              <div class="wz-tile {{ kind }}">{{ label[:2] }}</div>
+              <div><div style="font-weight:600">{{ label }}</div>
+                   <div class="page-sub">{{ kind }}</div></div>
+              <a class="btn ghost" style="margin-left:auto"
+                 href="{{ url_for('main.provider_wizard') }}">Change</a>
+            </div>
+
+            <div class="wz-grid">
+              <label class="wz-field"><span>Display name</span>
+                <input class="dp-input" name="name" value="{{ label }}" required></label>
+              {% for f in fields %}
+              <label class="wz-field {{ 'wide' if f.kind == 'secret' }}">
+                <span>{{ f.label }}{% if not f.required %} <em>optional</em>{% endif %}</span>
+                <input class="dp-input {{ 'mono' if f.kind != 'text' }}"
+                       type="{{ 'password' if f.kind == 'secret' else 'text' }}"
+                       name="{{ f.name }}" placeholder="{{ f.placeholder }}"
+                       {{ 'required' if f.required and f.kind != 'secret' }}></label>
+              {% endfor %}
+              <label class="wz-field wide" style="flex-direction:row;align-items:center;gap:9px">
+                <input type="checkbox" name="verify_ssl" value="1">
+                <span style="width:auto">Verify TLS certificate</span></label>
+              <label class="wz-field wide" style="flex-direction:row;align-items:center;gap:9px">
+                <input type="checkbox" name="default" value="1" checked>
+                <span style="width:auto">Use as the default provider</span></label>
+            </div>
+
+            <div id="wz-result"></div>
+
+            <div class="wz-foot">
+              <button class="btn" type="button" id="wz-test">Test connection</button>
+              <div class="spacer" style="flex:1"></div>
+              <a class="btn ghost" href="{{ url_for('main.provider_wizard') }}">Back</a>
+              <button class="btn accent" type="submit" id="wz-save">Save provider</button>
+            </div>
+          </form>
+        {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Queue — Bothy{% endblock %}
+{% block main %}
+<div style="display:flex;flex-direction:column;height:100%;min-height:0">
+  <div class="topbar">
+    <h1 class="page-title" style="font-size:17px">Queue</h1>
+    {% if batch %}
+    <div class="page-sub">Batch #{{ batch.id }} · {{ batch.jobs|length }} apps
+      {% if dry_run %}<span class="chip" style="margin-left:8px">dry run</span>{% endif %}</div>
+    {% endif %}
+    <div class="spacer" style="flex:1"></div>
+    {% if batch and not batch.finished %}
+      <form method="post" action="{{ url_for('main.action_queue_control', batch_id=batch.id, what='resume' if batch.paused else 'pause') }}">
+        <button class="btn ghost">{{ 'Resume queue' if batch.paused else 'Pause queue' }}</button>
+      </form>
+      <form method="post" action="{{ url_for('main.action_queue_control', batch_id=batch.id, what='abort') }}">
+        <button class="btn danger">Abort</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if not batch %}
+  <div class="content">
+    <div class="card"><div class="card-body" style="color:var(--fg-3)">
+      Nothing queued. Select applications in the
+      <a href="{{ url_for('main.catalog') }}" style="color:var(--accent-text)">catalog</a>
+      and deploy them.
+    </div></div>
+  </div>
+  {% else %}
+  <div class="queue" style="flex:1 1 auto; min-height:0" data-batch="{{ batch.id }}">
+    <div class="jobs">
+      <div style="padding:14px 18px">
+        <div style="display:flex;align-items:center;font-size:12px">
+          <span id="q-progress">{{ batch.done }} of {{ batch.jobs|length }} complete</span>
+        </div>
+        <div class="job-bar" style="height:6px;margin-top:9px" id="q-bar"></div>
+      </div>
+      <div id="q-jobs">{% include "_jobs.html" %}</div>
+      <div style="padding:14px 18px;border-top:1px solid var(--divider-row);display:flex;align-items:center;gap:10px">
+        <span class="label-up">On failure</span>
+        <span class="chip">{{ batch.on_failure|capitalize }}</span>
+      </div>
+    </div>
+
+    <div class="logpane">
+      <div class="log-head">
+        <span style="font-weight:600" id="log-name">{{ job.name if job }}</span>
+        <span class="mono" style="font-size:11px;color:var(--fg-4)" id="log-step">{{ job.step if job }}</span>
+        <div class="spacer" style="flex:1"></div>
+        <label class="page-sub" style="display:flex;gap:6px;align-items:center">
+          <input type="checkbox" id="follow" checked> Follow</label>
+      </div>
+      <div class="log-body" id="log-body">
+        {% for l in (job.log if job else []) %}
+        <div class="log-line {{ l.kind }}"><span class="t">{{ l.t }}</span><span>{{ l.text }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

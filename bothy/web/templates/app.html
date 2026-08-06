@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ d.name }} — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="page-sub" style="margin-bottom:10px">
+    <a href="{{ url_for('main.catalog') }}">Catalog</a> / {{ d.name }}
+  </div>
+  <div class="svc-head">
+    <div class="tile" style="width:46px;height:46px;flex:0 0 46px;font-size:15px">{{ d.initials }}</div>
+    <div>
+      <h1 class="page-title">{{ d.name }}</h1>
+      <div class="page-sub">{{ d.category or '—' }}</div>
+    </div>
+    <span class="chip"><span class="mono">{{ d.key }}</span></span>
+    <span class="status-chip">{{ d.audit_label }}{% if d.audit_verified_at %} {{ d.audit_verified_at }}{% endif %}</span>
+    <div class="spacer" style="flex:1"></div>
+    <button class="btn ghost">View definition</button>
+    <a class="btn accent" href="{{ url_for('main.app_detail', key=d.key, deploy=1) }}">Deploy {{ d.name }}</a>
+  </div>
+  <div style="max-width:560px;color:var(--fg-3);font-size:12px;line-height:1.55;margin-bottom:16px">{{ d.description }}</div>
+
+  <div class="{{ 'deploy-split' if deploy else 'two-col' }}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card"><div class="card-body">
+        <span class="label-up">Runtime</span>
+        <div class="kv"><span class="k">Type</span><span class="v">{{ d.type_label }}</span></div>
+        <div class="kv"><span class="k">Privileged</span><span class="v">no</span></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <span class="label-up">Default resources</span>
+        <div class="kv"><span class="k">vCPU</span><span class="v">{{ d.cores }}</span></div>
+        <div class="kv"><span class="k">Memory</span><span class="v">{{ d.memory_mb }} MB</span></div>
+        <div class="kv"><span class="k">Disk</span><span class="v">{{ d.disk_gb }} G</span></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <span class="label-up">Network</span>
+        <div class="kv"><span class="k">Ports</span><span class="v">{{ d.ports|join(', ') or '—' }}</span></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <span class="label-up">Secrets used</span>
+        <div class="kv"><span class="k">Env vars</span><span class="v">{{ d.env_vars|length }}</span></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <span class="label-up">Storage</span>
+        <div class="kv"><span class="k">Volumes</span><span class="v">{{ d.volumes|length }}</span></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <span class="label-up">Provenance</span>
+        <div class="kv"><span class="k">Source</span><span class="v">{{ d.source_ref }}</span></div>
+        <div class="kv"><span class="k">Verified</span><span class="v">{{ d.audit_verified_at or 'never' }}</span></div>
+      </div></div>
+    </div>
+    {% if deploy %}
+    <div class="deploy-panel">
+      <form method="post" action="{{ url_for('main.action_deploy') }}">
+        <input type="hidden" name="keys" value="{{ d.key }}">
+        <div class="dp-head">
+          <div>
+            <div style="font-weight:600;font-size:13px">Deploy {{ d.name }}</div>
+            <div class="page-sub">Step 2 of 4</div>
+          </div>
+          <a class="btn ghost" href="{{ url_for('main.app_detail', key=d.key) }}">Close</a>
+        </div>
+        <div class="dp-rail"><i style="width:50%"></i></div>
+
+        <div class="dp-step done">
+          <span class="t-ok">&#10003;</span> Target
+          <span class="mono" style="color:var(--fg-3);margin-left:auto">{{ nodes[0] if nodes else 'no provider' }}</span>
+        </div>
+
+        <div class="dp-step active">
+          <div class="label-up" style="margin-bottom:10px">Resources</div>
+          <label class="dp-row"><span>Node</span>
+            <select name="node" class="select">
+              {% for n in nodes %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+              {% if not nodes %}<option value="">no provider</option>{% endif %}
+            </select></label>
+          <label class="dp-row"><span>Storage</span>
+            <input class="dp-input mono" name="storage" value="local-lvm"></label>
+          <label class="dp-row"><span>vCPU</span>
+            <input class="dp-input mono" name="cores_{{ d.key }}" value="{{ d.cores }}"></label>
+          <label class="dp-row"><span>Memory</span>
+            <input class="dp-input mono" name="memory_{{ d.key }}" value="{{ d.memory_mb }}">
+            <span class="dp-hint">MB</span></label>
+          <label class="dp-row"><span>Disk</span>
+            <input class="dp-input mono" name="disk_{{ d.key }}" value="{{ d.disk_gb }}">
+            <span class="dp-hint">GB</span></label>
+          <label class="dp-row"><span>Hostname</span>
+            <input class="dp-input mono" name="hostname_{{ d.key }}" value="{{ d.key }}"></label>
+          <div class="callout-ok" style="margin-top:12px">
+            {% if dry_run %}Dry run &mdash; steps are logged, nothing is created.
+            {% else %}Live deploy &mdash; this will create a container.{% endif %}
+          </div>
+        </div>
+
+        <div class="dp-step">Network &amp; proxy <span class="dp-sum">DHCP</span></div>
+        <div class="dp-step">Environment ({{ d.env_vars|length }}) <span class="dp-sum">defaults</span></div>
+
+        <div class="dp-foot">
+          <span class="page-sub">On failure</span>
+          <select name="on_failure" class="select">
+            <option value="stop">Stop queue</option>
+            <option value="continue">Continue</option>
+          </select>
+          <div class="spacer" style="flex:1"></div>
+          <button class="btn accent" type="submit">Deploy now</button>
+        </div>
+      </form>
+    </div>
+    {% else %}
+    <div class="card"><div class="card-body">
+      <span class="label-up">Tags</span>
+      <div class="chips" style="margin-top:10px">
+        {% for t in d.tags %}<span class="chip pill">{{ t }}</span>{% endfor %}
+      </div>
+    </div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

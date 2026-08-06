@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Collections — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="page-head">
+    <h1 class="page-title">Collections</h1>
+    <div class="page-sub">{{ collections|length }} saved</div>
+  </div>
+  {% for c in collections %}
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-head">
+      <div class="card-title">{{ c.name }}</div>
+      <div class="page-sub">{{ c.defs|length }} apps</div>
+      <div class="spacer" style="flex:1"></div>
+      <form method="post" action="{{ url_for('main.batch') }}">
+        <input type="hidden" name="collection" value="{{ c.id }}">
+        <button class="btn accent">Deploy collection</button>
+      </form>
+      <form method="post" action="{{ url_for('main.action_collection_delete', cid=c.id) }}">
+        <button class="btn ghost t-danger">Delete</button>
+      </form>
+    </div>
+    <div class="card-body">
+      <div class="chips">
+        {% for d in c.defs %}
+        <a class="chip pill" href="{{ url_for('main.app_detail', key=d.key) }}">
+          {{ d.name }} <span class="mono" style="color:var(--fg-4)">{{ d.resource_summary }}</span></a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="card"><div class="card-body" style="color:var(--fg-3)">
+    No collections yet. Select applications in the
+    <a href="{{ url_for('main.catalog') }}" style="color:var(--accent-text)">catalog</a>
+    and choose <em>Save as collection</em>.
+  </div></div>
+  {% endfor %}
+</div>
+{% endblock %}

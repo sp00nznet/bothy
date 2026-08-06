@@ -1,0 +1,80 @@
+<Window x:Class="Bothy.Desktop.ProviderPropertiesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="Home lab — Properties" Width="560" Height="456"
+        WindowStyle="None" ResizeMode="NoResize"
+        Background="{StaticResource WinBg}"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True" SnapsToDevicePixels="True">
+  <WindowChrome.WindowChrome>
+    <shell:WindowChrome CaptionHeight="32" ResizeBorderThickness="0" CornerRadius="0" GlassFrameThickness="0"/>
+  </WindowChrome.WindowChrome>
+
+  <Border BorderBrush="#29FFFFFF" BorderThickness="1" CornerRadius="8" Background="{StaticResource WinBg}">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="32"/>
+        <RowDefinition Height="32"/>   <!-- tab strip -->
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="50"/>
+      </Grid.RowDefinitions>
+
+      <Border Grid.Row="0" Background="{StaticResource WinChrome}" CornerRadius="8,8,0,0">
+        <DockPanel LastChildFill="False">
+          <TextBlock DockPanel.Dock="Left" Text="Home lab — Properties" VerticalAlignment="Center"
+                     Margin="14,0,0,0" Foreground="{StaticResource Fg2}"/>
+          <Button DockPanel.Dock="Right" Width="44" Height="32" Style="{StaticResource CmdButton}"
+                  shell:WindowChrome.IsHitTestVisibleInChrome="True" Click="Close_Click">
+            <TextBlock Text="&#xE8BB;" FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets" FontSize="10"
+                       Foreground="{StaticResource Fg2}"/></Button>
+        </DockPanel>
+      </Border>
+
+      <!-- property-sheet tabs -->
+      <Border Grid.Row="1" Background="{StaticResource WinChrome}"
+              BorderBrush="{StaticResource Stroke}" BorderThickness="0,0,0,1">
+        <StackPanel Orientation="Horizontal" Margin="10,0">
+          <Border Background="{StaticResource WinBg}" Padding="14,0" Height="32">
+            <TextBlock Text="Connection" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="11.5"/></Border>
+          <Border Padding="14,0" Height="32"><TextBlock Text="Defaults" VerticalAlignment="Center"
+                  FontSize="11.5" Foreground="{StaticResource Fg3}"/></Border>
+          <Border Padding="14,0" Height="32"><TextBlock Text="Network" VerticalAlignment="Center"
+                  FontSize="11.5" Foreground="{StaticResource Fg3}"/></Border>
+          <Border Padding="14,0" Height="32"><TextBlock Text="Storage" VerticalAlignment="Center"
+                  FontSize="11.5" Foreground="{StaticResource Fg3}"/></Border>
+        </StackPanel>
+      </Border>
+
+      <StackPanel Grid.Row="2" Margin="18,16">
+        <Grid x:Name="FieldGrid"/>
+        <CheckBox IsChecked="True" Margin="120,10,0,0" Foreground="{StaticResource Fg}">
+          <TextBlock Text="Accept self-signed certificate" FontSize="11.5"/></CheckBox>
+        <Border Background="#146CCB5F" BorderBrush="#386CCB5F" BorderThickness="1"
+                CornerRadius="5" Padding="10,8" Margin="0,16,0,0">
+          <TextBlock Foreground="{StaticResource OkText}" FontSize="11.5"
+                     Text="&#10003; Connected — pve-manager/9.1.1 · 2 nodes · 7 storages"/>
+        </Border>
+      </StackPanel>
+
+      <Border Grid.Row="3" Background="{StaticResource WinPanel}"
+              BorderBrush="{StaticResource Stroke}" BorderThickness="0,1,0,0" CornerRadius="0,0,8,8">
+        <DockPanel LastChildFill="False" Margin="14,0">
+          <Button DockPanel.Dock="Left" Style="{StaticResource CmdButton}" Height="30" Width="122"
+                  BorderBrush="{StaticResource Stroke}" BorderThickness="1">
+            <TextBlock Text="Test connection"/></Button>
+          <!-- Apply stays disabled until something is dirty -->
+          <Button DockPanel.Dock="Right" Style="{StaticResource CmdButton}" Height="30" Width="76"
+                  BorderBrush="{StaticResource Stroke}" BorderThickness="1" IsEnabled="False"
+                  Margin="8,0,0,0" Opacity="0.45"><TextBlock Text="Apply"/></Button>
+          <Button DockPanel.Dock="Right" Style="{StaticResource CmdButton}" Height="30" Width="76"
+                  BorderBrush="{StaticResource Stroke}" BorderThickness="1" Margin="8,0,0,0"
+                  Click="Close_Click"><TextBlock Text="Cancel"/></Button>
+          <Button DockPanel.Dock="Right" Style="{StaticResource AccentButton}" Height="30" Width="76"
+                  Margin="8,0,0,0" Click="Close_Click">
+            <TextBlock Text="OK" Foreground="{StaticResource AccentOn}" FontWeight="SemiBold"/></Button>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </Border>
+</Window>

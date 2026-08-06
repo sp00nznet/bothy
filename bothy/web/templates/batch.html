@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Configure batch — Bothy{% endblock %}
+{% block main %}
+<div class="content">
+  <div class="page-head">
+    <h1 class="page-title">Configure batch</h1>
+    <div class="page-sub">{{ defs|length }} applications</div>
+    <div class="spacer" style="flex:1"></div>
+    <a class="btn ghost" href="{{ url_for('main.catalog') }}">Back to catalog</a>
+  </div>
+
+  <form method="post" action="{{ url_for('main.action_deploy') }}">
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head"><div class="card-title">Target</div></div>
+      <div class="card-body" style="display:flex;gap:20px;flex-wrap:wrap">
+        <label class="dp-row" style="margin:0"><span>Node</span>
+          <select name="node" class="select">
+            {% for n in nodes %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+            {% if not nodes %}<option value="">no provider configured</option>{% endif %}
+          </select></label>
+        <label class="dp-row" style="margin:0"><span>Storage</span>
+          <input class="dp-input mono" name="storage" value="local-lvm" style="width:150px"></label>
+        <label class="dp-row" style="margin:0"><span>On failure</span>
+          <select name="on_failure" class="select">
+            <option value="stop">Stop queue</option>
+            <option value="continue">Continue</option>
+          </select></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Applications</div>
+        <div class="spacer" style="flex:1"></div>
+        <div class="mono page-sub">
+          {{ totals.cores }} vCPU · {{ (totals.memory_mb / 1024)|round(1) }} GB ·
+          {{ totals.disk_gb }} GB total</div>
+      </div>
+      <table class="tbl">
+        <thead><tr>
+          <th style="width:34px"></th><th>Application</th>
+          <th style="width:120px">Hostname</th><th style="width:70px">vCPU</th>
+          <th style="width:96px">Memory MB</th><th style="width:80px">Disk GB</th>
+          <th style="width:110px">Audit</th>
+        </tr></thead>
+        <tbody>
+        {% for d in defs %}
+          <tr>
+            <td><div class="tile" style="width:22px;height:22px;font-size:9px">{{ d.initials }}</div></td>
+            <td>{{ d.name }} <span class="mono" style="color:var(--fg-4)">{{ d.key }}</span>
+              <input type="hidden" name="keys" value="{{ d.key }}"></td>
+            <td><input class="dp-input mono" name="hostname_{{ d.key }}" value="{{ d.key }}" style="width:110px"></td>
+            <td><input class="dp-input mono" name="cores_{{ d.key }}" value="{{ d.cores }}" style="width:60px"></td>
+            <td><input class="dp-input mono" name="memory_{{ d.key }}" value="{{ d.memory_mb }}" style="width:86px"></td>
+            <td><input class="dp-input mono" name="disk_{{ d.key }}" value="{{ d.disk_gb }}" style="width:70px"></td>
+            <td class="t-{{ 'ok' if d.audit_state=='verified' else 'warn' if d.audit_state=='unreviewed' else 'danger' }}">{{ d.audit_label }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px">
+        <div class="callout-ok" style="flex:1">
+          {% if dry_run %}Dry run — every step is logged, nothing is created.
+          {% else %}<span class="t-danger">Live deploy — this will create {{ defs|length }} containers.</span>{% endif %}
+        </div>
+        <button class="btn accent" type="submit">Deploy {{ defs|length }} apps →</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
