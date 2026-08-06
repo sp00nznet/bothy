@@ -2,7 +2,10 @@
 name = "bothy"
 version = "0.1.0"
 description = "Multi-provider infrastructure deployment console"
+readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = ["flask>=3.0"]
 
 [project.scripts]
