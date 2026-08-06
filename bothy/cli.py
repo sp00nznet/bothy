@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 
 from .catalog import AUDIT_LABEL, Catalog
 from .estate import Estate
@@ -196,6 +197,54 @@ def cmd_serve(args) -> int:
     return 0
 
 
+def cmd_import(args) -> int:
+    """Enrich a catalog from public sources and write a JSON snapshot.
+
+    Writes to --out rather than over the input: an import is a proposal to be
+    reviewed, not something that silently rewrites the catalog in place.
+    """
+    import importlib.util
+
+    from .importer import build
+
+    src = args.catalog or os.environ.get("BOTHY_CATALOG")
+    if not src:
+        print("need --catalog (a containers.py or a catalog JSON)")
+        return 2
+    if str(src).endswith(".py"):
+        spec = importlib.util.spec_from_file_location("_legacy", src)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        base = {k: dict(v) for k, v in getattr(mod, "CONTAINER_DEFINITIONS", {}).items()}
+        for k, v in getattr(mod, "VM_DEFINITIONS", {}).items():
+            base.setdefault(k, {**dict(v), "deploy_type": "vm"})
+    else:
+        base = json.loads(Path(src).read_text(encoding="utf-8"))
+
+    defs, report = build(base, add_games=not args.no_games, refresh=args.refresh)
+
+    if args.json:
+        print(json.dumps(report, indent=1))
+    else:
+        r = report
+        print(f"  definitions   {r['definitions_before']} -> {r['definitions_after']}"
+              f"  (+{r['games_added']} game servers)")
+        print(f"  upstream link {r['with_upstream']} resolved, "
+              f"{r['without_upstream']} still missing")
+        for k, n in sorted(r["link_sources"].items(), key=lambda x: -x[1]):
+            print(f"      {n:>5}  {k}")
+        print("\n  sources used:")
+        for s in r["sources"].values():
+            print(f"      {s['licence']:<14} {s['repo']}")
+
+    if args.out:
+        Path(args.out).write_text(json.dumps(defs, indent=1), encoding="utf-8")
+        print(f"\n  wrote {args.out}")
+    else:
+        print("\n  (no --out given; nothing written)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="bothy", description="Bothy — infrastructure deployment console")
     p.add_argument("--catalog", help="path to containers.py or a catalog JSON snapshot")
@@ -225,6 +274,12 @@ def build_parser() -> argparse.ArgumentParser:
     c5 = common(sub.add_parser("audit", help="catalog audit summary"))
     c5.add_argument("--run", action="store_true", help="actually check every link now")
     c5.set_defaults(func=cmd_audit)
+
+    c6 = common(sub.add_parser("import", help="pull definitions and upstream links from public catalogues"))
+    c6.add_argument("--out", help="write the enriched catalog JSON here")
+    c6.add_argument("--no-games", action="store_true", help="do not add game servers from Pelican eggs")
+    c6.add_argument("--refresh", action="store_true", help="re-download sources instead of using the cache")
+    c6.set_defaults(func=cmd_import)
 
     c3 = sub.add_parser("serve", help="run the web console")
     c3.add_argument("--host", default="127.0.0.1")

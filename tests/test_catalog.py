@@ -408,6 +408,73 @@ def test_dhcp_is_not_an_address():
     assert stopped.address == ""
 
 
+def test_importer_derives_links_from_ids_we_already_hold():
+    from bothy.importer import derived_links
+
+    defs = {
+        "ark": {"env_vars": [{"name": "STEAM_APP_ID", "default": "376030"},
+                             {"name": "LINUXGSM_NAME", "default": "arkserver"}]},
+        "mc": {"env_vars": [{"name": "LINUXGSM_NAME", "default": "mcserver"}]},
+        "plex": {"env_vars": [{"name": "CLAIM_TOKEN", "default": "x"}]},
+        "junk": {"env_vars": [{"name": "STEAM_APP_ID", "default": "not-a-number"}]},
+    }
+    got = derived_links(defs)
+    # an app ID is more specific than a server name, so it wins
+    assert got["ark"] == ("https://store.steampowered.com/app/376030/", "steam app id")
+    assert got["mc"] == ("https://linuxgsm.com/servers/mcserver/", "linuxgsm name")
+    assert "plex" not in got                  # nothing to derive from
+    assert "junk" not in got                  # never build a URL from a non-numeric id
+
+
+def test_importer_never_overwrites_an_existing_link():
+    from bothy.importer import enrich
+
+    defs = {"gitea": {"name": "Gitea", "upstream": "https://mine.example.com"}}
+    out, stats = enrich(defs, {"gitea": {"website": "https://about.gitea.com"}}, {}, {})
+    assert out["gitea"]["upstream"] == "https://mine.example.com"
+    assert stats["already had one"] == 1
+
+
+def test_importer_enrich_precedence():
+    from bothy.importer import enrich
+
+    defs = {
+        "a": {"name": "A", "env_vars": [{"name": "STEAM_APP_ID", "default": "10"}]},
+        "b": {"name": "Bee"},
+        "c": {"name": "Cee"},
+        "d": {"name": "Dee"},
+    }
+    meta = {"a": {"website": "https://meta-a"}, "b": {"website": "https://meta-b"}}
+    ash = {"cee": "https://ash-c"}
+    gsm = {"deeserver": {"name": "Dee", "server": "deeserver", "os": ""}}
+    out, stats = enrich(defs, meta, ash, gsm)
+    # an ID we already store beats another catalogue's slug match
+    assert out["a"]["upstream"] == "https://store.steampowered.com/app/10/"
+    assert out["b"]["upstream"] == "https://meta-b"
+    assert out["c"]["upstream"] == "https://ash-c"
+    assert out["d"]["upstream"] == "https://linuxgsm.com/servers/deeserver/"
+    assert "unresolved" not in stats          # all four were resolvable
+    assert sum(stats.values()) == len(defs)   # every definition is accounted for
+
+
+def test_importer_slug_keys_do_not_collide():
+    from bothy.importer import _slug_key
+
+    taken = {}
+    for name in ("ARK: Survival Evolved", "ARK Survival Evolved", "ark survival evolved"):
+        taken[_slug_key(name, taken)] = 1
+    assert sorted(taken) == ["ark-survival-evolved", "ark-survival-evolved-2",
+                             "ark-survival-evolved-3"]
+
+
+def test_importer_handles_both_docker_image_shapes():
+    from bothy.importer import _images
+
+    assert _images({"Java 21": "ghcr.io/x:21"}) == ["ghcr.io/x:21"]   # newer eggs
+    assert _images(["ghcr.io/x:21"]) == ["ghcr.io/x:21"]              # older eggs
+    assert _images(None) == [] and _images("") == []
+
+
 def test_demo_mode_touches_nothing_real():
     """Demo mode must be safe to run on a machine with real credentials."""
     import ipaddress
