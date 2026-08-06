@@ -107,9 +107,10 @@ Credentials go in `~/.bothy/config.toml`, never in the repository.
 | History | deploys, audits, provider and collection changes |
 | Windows client | D1–D5 built, live estate over `/api/estate` |
 
-Only Proxmox has an adapter. The other seven provider types are listed in the
-wizard so you can see the shape of it, and refuse to test rather than pretending
-to connect.
+Bothy targets Proxmox. The config layer is provider-agnostic and the wizard
+lists other types, but none of them have an adapter and they refuse to test
+rather than pretend to connect — an AWS or Azure adapter is not something this
+project can honestly verify.
 
 ## Layout
 
@@ -132,6 +133,7 @@ tests/
 - **[Screens](docs/screenshots.md)** — every screenshot, full size
 - **[Configuration](docs/configuration.md)** — credentials, environment, catalog sources
 - **[Decisions](docs/decisions.md)** — why things behave the way they do, mostly because the obvious version was wrong first
+- **[Catalog sources](docs/catalog-sources.md)** — where definitions and upstream links can come from, and what each is worth
 
 ## License
 
