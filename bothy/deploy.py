@@ -180,7 +180,11 @@ class DeployEngine:
                 job.status = FAILED
                 job.reason = f"{type(e).__name__}: {e}"
                 job.emit("error", job.reason)
-                if batch.on_failure == "stop":
+                # Only "continue" carries on. Anything else — including
+                # "rollback", which is offered but not implemented — halts.
+                # Matching on "stop" alone meant rollback quietly behaved as
+                # the *most permissive* policy while reading as the safest one.
+                if batch.on_failure != "continue":
                     for rest in batch.jobs:
                         if rest.status == QUEUED:
                             rest.status = BLOCKED

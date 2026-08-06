@@ -4,7 +4,7 @@
 
 A web console, a native Windows client and a CLI over one shared data layer.
 Point it at a Proxmox cluster and it reads your estate, browses a catalog of
-~686 application definitions, and deploys them — dry-run first, always.
+**855 application definitions**, and deploys them — dry-run first, always.
 
 ![Overview](docs/screenshots/W1-overview.png)
 
@@ -37,8 +37,10 @@ yourself. Category survives as an auditable field and nothing more.
 **Definitions carry an audit state.** Verified, unreviewed, or broken link —
 surfaced in the catalog, in a dedicated audit queue, and as live reachability
 checks against the running estate. The audit is a real HTTP checker, and its
-headline finding is an absence: of 686 definitions, **zero** declare their own
-upstream link.
+headline finding was an absence: not one definition declared its own upstream
+link. So `bothy import` goes and finds them — 572 of 855 resolved from public
+catalogues and from Steam and LinuxGSM identifiers the definitions were already
+carrying.
 
 ![Audit queue](docs/screenshots/W7-audit-queue.png)
 
@@ -82,7 +84,8 @@ export BOTHY_CATALOG=/path/to/containers.py      # or a catalog JSON snapshot
 python -m bothy.cli serve --port 8760            # web console
 python -m bothy.cli catalog -s git --type lxc    # CLI
 python -m bothy.cli audit
-python tests/test_catalog.py                     # 33 checks, no framework
+python -m bothy.cli import --out catalog.json     # enrich from public catalogues
+python tests/test_catalog.py                     # 38 checks, no framework
 ```
 
 ```powershell
@@ -106,6 +109,7 @@ Credentials go in `~/.bothy/config.toml`, never in the repository.
 | Providers | add-provider wizard, test-before-save, real handshake |
 | History | deploys, audits, provider and collection changes |
 | Windows client | D1–D5 built, live estate over `/api/estate` |
+| Import | 855 definitions and 572 upstream links from seven public catalogues |
 
 Bothy targets Proxmox. The config layer is provider-agnostic and the wizard
 lists other types, but none of them have an adapter and they refuse to test
@@ -121,6 +125,8 @@ bothy/
   deploy.py      queue engine, dry run, Proxmox runner
   install.py     install scripts inside the guest, over SSH
   demo.py        the sample estate behind BOTHY_DEMO=1
+  importer.py    definitions and upstream links from public catalogues
+  audit.py       catalog link checking
   cli.py         command line
   web/           Flask + Jinja console
 desktop/         native Windows client (WPF, .NET 8)
@@ -130,10 +136,15 @@ tests/
 
 ## Docs
 
-- **[Screens](docs/screenshots.md)** — every screenshot, full size
-- **[Configuration](docs/configuration.md)** — credentials, environment, catalog sources
-- **[Decisions](docs/decisions.md)** — why things behave the way they do, mostly because the obvious version was wrong first
-- **[Catalog sources](docs/catalog-sources.md)** — where definitions and upstream links can come from, and what each is worth
+**[→ Full documentation](docs/)**
+
+| Using it | The catalog | How it is built |
+|---|---|---|
+| [CLI reference](docs/cli.md) | [Application catalog](docs/catalog.md) — all 855 | [Architecture](docs/architecture.md) |
+| [HTTP API](docs/api.md) | [Catalog sources](docs/catalog-sources.md) | [Decisions](docs/decisions.md) |
+| [Configuration](docs/configuration.md) | | [Screens](docs/screenshots.md) |
+| [Deploying](docs/deploying.md) | | |
+| [Troubleshooting](docs/troubleshooting.md) | | |
 
 ## License
 

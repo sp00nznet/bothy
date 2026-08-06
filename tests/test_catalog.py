@@ -177,6 +177,30 @@ def test_deploy_stop_on_failure_blocks_the_rest():
     assert b.jobs[1].status == "blocked" and b.jobs[1].reason
 
 
+def test_only_continue_carries_on_after_a_failure():
+    """rollback is offered but unimplemented; it must not be the loosest policy."""
+    from bothy.deploy import DeployEngine, DeployJob
+
+    def runner(job):
+        if job.key == "boom":
+            raise RuntimeError("boom")
+
+    def run(policy):
+        eng = DeployEngine(runner)
+        b = eng.submit([DeployJob(key="boom", name="B"), DeployJob(key="next", name="N")],
+                       on_failure=policy)
+        for _ in range(100):
+            if b.finished:
+                break
+            time.sleep(0.05)
+        return b.jobs[1].status
+
+    assert run("continue") == "complete"
+    assert run("stop") == "blocked"
+    assert run("rollback") == "blocked"      # was "complete": the least safe option
+    assert run("typo") == "blocked"          # an unknown policy must not run on
+
+
 def test_dry_run_never_prints_none_for_vmid():
     from bothy.deploy import DeployJob, dry_run_runner
     j = DeployJob(key="gitea", name="Gitea", storage="local-lvm")
