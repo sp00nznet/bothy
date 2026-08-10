@@ -85,7 +85,7 @@ python -m bothy.cli serve --port 8760            # web console
 python -m bothy.cli catalog -s git --type lxc    # CLI
 python -m bothy.cli audit
 python -m bothy.cli import --out catalog.json     # enrich from public catalogues
-python tests/test_catalog.py                     # 38 checks, no framework
+python tests/test_catalog.py                     # 39 checks, no framework
 ```
 
 ```powershell
