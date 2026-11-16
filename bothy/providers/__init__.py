@@ -12,7 +12,7 @@ def register(kind: str, cls: type[Provider]) -> None:
 
 
 def build(cfg: ProviderConfig) -> Provider:
-    from . import proxmox  # noqa: F401  (registers itself)
+    from . import aws, proxmox  # noqa: F401  (register themselves)
     cls = _REGISTRY.get(cfg.type)
     if cls is None:
         raise ProviderError(f"no adapter for provider type {cfg.type!r}")
@@ -65,7 +65,7 @@ PROVIDER_FIELDS: dict[str, list[dict]] = {
     ],
     "gcp": [
         _F("host", "Project ID", "text"),
-        _F("password", "Service-account JSON path", "text", "C:\path\to\sa.json"),
+        _F("password", "Service-account JSON path", "text", r"C:\path\to\sa.json"),
     ],
     "hyperv": [
         _F("host", "WinRM host", "text", "WIN-HV01"),
@@ -84,7 +84,7 @@ PROVIDER_FIELDS: dict[str, list[dict]] = {
 }
 
 # only adapters that actually exist can be tested / saved as working
-IMPLEMENTED = {"proxmox"}
+IMPLEMENTED = {"proxmox", "aws"}
 
 __all__ = ["Provider", "ProviderError", "ProviderStatus", "build", "register",
            "KNOWN_TYPES", "PROVIDER_FIELDS", "IMPLEMENTED"]

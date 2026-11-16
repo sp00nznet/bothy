@@ -15,7 +15,7 @@ from flask import (Blueprint, Flask, current_app, jsonify, redirect,
 from ..audit import AuditStore, run_audit, urls_from_install_scripts
 from ..catalog import Catalog
 from ..collections import CollectionStore
-from ..config import load_providers
+from ..config import catalog_source, load_providers
 from ..demo import DEMO_TEMPLATE, demo_estate, demo_history, demo_providers
 from ..deploy import DeployEngine, DeployJob, dry_run_runner
 from ..estate import Estate
@@ -38,7 +38,7 @@ def create_app(catalog_path: str | None = None) -> Flask:
     app = Flask(__name__)
     app.config["JSON_SORT_KEYS"] = False
 
-    src = catalog_path or os.environ.get("BOTHY_CATALOG")
+    src = catalog_path or catalog_source()
     if src and Path(src).suffix == ".py":
         catalog = Catalog.from_legacy(src)
     elif src:
@@ -74,14 +74,22 @@ def create_app(catalog_path: str | None = None) -> Flask:
     # containers. Anything else — unset, typo, empty — stays dry.
     live = os.environ.get("BOTHY_DEPLOY", "dry") == "real" and not demo
     runner = dry_run_runner
+    dflt = next((p for p in providers if p.default), providers[0] if providers else None)
+    if dflt is not None and dflt.type == "aws" and not demo:
+        from ..providers.aws import aws_dry_run
+        runner = aws_dry_run     # preview the call that would really be made
     if live:
         from ..deploy import make_proxmox_runner
         from ..providers import build as _build
-        cfg = next((p for p in providers if p.configured and p.type == "proxmox"), None)
+        from ..providers.aws import make_aws_runner
+        runners = {"proxmox": make_proxmox_runner, "aws": make_aws_runner}
+        usable = [p for p in providers if p.configured and p.type in runners]
+        # the default provider wins; otherwise the first one we can deploy to
+        cfg = next((p for p in usable if p.default), usable[0] if usable else None)
         if cfg is None:
             live = False        # asked for live with nothing to deploy to
         else:
-            runner = make_proxmox_runner(_build(cfg))
+            runner = runners[cfg.type](_build(cfg))
     engine = DeployEngine(runner)
     app.extensions["bothy"] = {
         "catalog": catalog,
@@ -307,7 +315,7 @@ def credentials():
 @main.route("/settings")
 def settings():
     st = _state()
-    src = os.environ.get("BOTHY_CATALOG", "(none)")
+    src = (catalog_source() or "(none)")
     if src != "(none)":
         src = _tilde(Path(src))
     return render_template("simple.html", active="settings", title="Settings",
