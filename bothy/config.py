@@ -42,12 +42,23 @@ class ProviderConfig:
 
     @property
     def configured(self) -> bool:
+        if self.type == "aws":
+            return bool(self.password or (self.extra or {}).get("emulator"))
         return bool(self.host and (self.password or self.token_secret))
 
     def redacted(self) -> dict:
         d = {k: v for k, v in self.__dict__.items() if k not in ("password", "token_secret", "extra")}
         d["auth"] = "token" if self.token_secret else "password" if self.password else "none"
         return d
+
+
+def catalog_source() -> str:
+    """$BOTHY_CATALOG, else the catalog shipped in the repo (catalog/containers.py)."""
+    env = os.environ.get("BOTHY_CATALOG")
+    if env:
+        return env
+    bundled = Path(__file__).resolve().parents[1] / "catalog" / "containers.py"
+    return str(bundled) if bundled.exists() else ""
 
 
 def config_path() -> Path | None:
@@ -118,6 +129,13 @@ def dump_providers(providers: list[ProviderConfig]) -> str:
             out.append(f'node = "{_toml_escape(p.node)}"')
         out.append(f"verify_ssl = {str(bool(p.verify_ssl)).lower()}")
         out.append(f"default = {str(bool(p.default)).lower()}")
+        for k, v in (p.extra or {}).items():     # ssh_key, emulator, ami ...
+            if isinstance(v, bool):
+                out.append(f"{k} = {str(v).lower()}")
+            elif isinstance(v, (int, float)):
+                out.append(f"{k} = {v}")
+            elif isinstance(v, str):
+                out.append(f'{k} = "{_toml_escape(v)}"')
         out.append("")
     return "\n".join(out)
 

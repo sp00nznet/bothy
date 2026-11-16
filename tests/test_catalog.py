@@ -628,6 +628,40 @@ def test_deploy_log_is_capped():
     assert any("trimmed" in l.text for l in job.log)
 
 
+def test_provider_extra_survives_a_wizard_save():
+    """emulator / ssh_key live in `extra`; a save that dropped them silently
+    broke install scripts (ssh_key) and the AWS emulator provider."""
+    import tomllib
+    from bothy.config import ProviderConfig, dump_providers
+    ps = [ProviderConfig(name="emu", type="aws", extra={"emulator": 9297, "ami": "ami-0"}),
+          ProviderConfig(name="lab", host="h", password="p", extra={"ssh_key": r"C:\k"})]
+    d = tomllib.loads(dump_providers(ps))["providers"]
+    assert d[0]["emulator"] == 9297 and d[0]["ami"] == "ami-0"
+    assert d[1]["ssh_key"] == r"C:\k"
+    assert ps[0].configured                       # emulator needs no secret in config
+
+
+def test_aws_sizing_and_ids():
+    from bothy.deploy import DeployJob
+    from bothy.providers.aws import build_run_params, instance_type, vmid_of
+    assert instance_type(1, 512) == "t3.nano" and instance_type(2, 2048) == "t3.small"
+    assert instance_type(4, 4096) == "t3.xlarge" and instance_type(64, 1 << 20) == "t3.2xlarge"
+    assert vmid_of("i-00000000000000001") == 1 and vmid_of("i-0abc") == 0xabc
+    p = build_run_params(DeployJob(key="gitea", name="Gitea", disk_gb=4), "ami-1", "")
+    assert "UserData" not in p                    # no script, no empty UserData
+    assert p["BlockDeviceMappings"][0]["Ebs"]["VolumeSize"] == 8   # AL2023 root minimum
+
+
+def test_bundled_catalog_carries_no_lan_layout():
+    """catalog/ is copied from the private myhome repo into a public one.
+    default_ip there is the owner's real LAN map; it must never come across."""
+    import re
+    src = (Path(__file__).resolve().parents[1] / "catalog" / "containers.py").read_text(encoding="utf-8")
+    assert "default_ip" not in src
+    assert not re.search(r"192\.168\.1\.\d+", src)
+    assert len(Catalog.from_legacy(str(Path(__file__).resolve().parents[1] / "catalog" / "containers.py"))) > 600
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:

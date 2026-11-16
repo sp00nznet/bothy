@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 from .catalog import AUDIT_LABEL, Catalog
+from .config import catalog_source
 from .estate import Estate
 
 # ANSI, disabled when not a tty or when NO_COLOR is set
@@ -58,7 +59,7 @@ AUDIT_COLOR = {"verified": OK, "unreviewed": WARN, "broken": DANGER}
 
 
 def load_catalog(path: str | None) -> Catalog:
-    src = path or os.environ.get("BOTHY_CATALOG")
+    src = path or catalog_source()
     if not src:
         return Catalog.from_mapping({})
     return Catalog.from_legacy(src) if src.endswith(".py") else Catalog.from_json(src)
@@ -160,7 +161,7 @@ def cmd_audit(args) -> int:
     from .audit import AuditStore, run_audit, urls_from_install_scripts
     store = AuditStore.load()
     if args.run:
-        src = args.catalog or os.environ.get("BOTHY_CATALOG", "")
+        src = args.catalog or catalog_source()
         extra = {}
         if src.endswith(".py"):
             import pathlib as _p
@@ -192,7 +193,7 @@ def cmd_audit(args) -> int:
 
 def cmd_serve(args) -> int:
     from .web import create_app
-    app = create_app(args.catalog or os.environ.get("BOTHY_CATALOG"))
+    app = create_app(args.catalog or catalog_source())
     app.run(host=args.host, port=args.port, debug=False, use_reloader=False)
     return 0
 
@@ -207,7 +208,7 @@ def cmd_import(args) -> int:
 
     from .importer import build
 
-    src = args.catalog or os.environ.get("BOTHY_CATALOG")
+    src = args.catalog or catalog_source()
     if not src:
         print("need --catalog (a containers.py or a catalog JSON)")
         return 2
